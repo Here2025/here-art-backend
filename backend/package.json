@@ -1,0 +1,13 @@
+
+{
+  "name": "here-backend",
+  "version": "1.0.0",
+  "description": "Backend for the Here app",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
