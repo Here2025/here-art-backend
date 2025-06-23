@@ -11,9 +11,27 @@ app.get('/', (req, res) => {
   res.send('Root OK');
 });
 
-// Test route
+// Health check route
 app.get('/api/test', (req, res) => {
   res.json({ status: 'success', message: 'Backend is live!' });
+});
+
+// Dummy artwork data route
+app.get('/api/artworks', (req, res) => {
+  res.json([
+    {
+      id: 1,
+      title: 'Mural of Hope',
+      type: 'Mural',
+      coordinates: [35.7796, -78.6382],
+    },
+    {
+      id: 2,
+      title: 'Statue of Light',
+      type: 'Sculpture',
+      coordinates: [35.7800, -78.6400],
+    },
+  ]);
 });
 
 const PORT = process.env.PORT || 3001;
