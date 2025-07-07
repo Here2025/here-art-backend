@@ -1,38 +1,38 @@
 const express = require('express');
-const app = express();
+const cors = require('cors');
+const artworksRoute = require('./routes/artworks');
 
+const app = express();
 console.log("🟡 Server initializing...");
 
-// Middleware to parse JSON
+// CORS setup to allow frontend (local or production) to access the backend
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://here-art-frontend-production.up.railway.app' // Add your frontend domain if deployed
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS: ' + origin));
+    }
+  }
+}));
+
 app.use(express.json());
 
-// Root route (quick test)
+// Routes
 app.get('/', (req, res) => {
   res.send('Root OK');
 });
 
-// Health check route
 app.get('/api/test', (req, res) => {
   res.json({ status: 'success', message: 'Backend is live!' });
 });
 
-// Dummy artwork data route
-app.get('/api/artworks', (req, res) => {
-  res.json([
-    {
-      id: 1,
-      title: 'Mural of Hope',
-      type: 'Mural',
-      coordinates: [35.7796, -78.6382],
-    },
-    {
-      id: 2,
-      title: 'Statue of Light',
-      type: 'Sculpture',
-      coordinates: [35.7800, -78.6400],
-    },
-  ]);
-});
+app.use('/api/artworks', artworksRoute);
 
 const PORT = process.env.PORT || 3001;
 const HOST = '0.0.0.0';
@@ -40,6 +40,7 @@ const HOST = '0.0.0.0';
 app.listen(PORT, HOST, () => {
   console.log(`✅ Backend running on http://${HOST}:${PORT}`);
 });
+
 
 
 
