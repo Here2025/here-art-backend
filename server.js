@@ -18,13 +18,29 @@ const allowedOrigins = [
   'http://localhost:5173',
 ].filter(Boolean);
 
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  try {
+    const parsed = new URL(origin);
+    const isHttps = parsed.protocol === 'https:';
+    const isHereProduction = parsed.hostname === 'herefavoured.netlify.app';
+    const isHereDeployPreview = parsed.hostname.endsWith('--herefavoured.netlify.app');
+
+    return isHttps && (isHereProduction || isHereDeployPreview);
+  } catch (error) {
+    return false;
+  }
+}
+
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '4mb' }));
 app.use(express.urlencoded({ extended: true, limit: '4mb' }));
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
