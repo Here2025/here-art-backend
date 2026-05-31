@@ -76,6 +76,8 @@ const demoArtworks = [
 async function ensureSchema() {
   if (!pool) return;
 
+  await pool.query('create extension if not exists pgcrypto;');
+
   await pool.query(`
     create table if not exists artworks (
       id uuid primary key default gen_random_uuid(),
