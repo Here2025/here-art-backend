@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { Pool } = require('pg');
+const { registerPlatformRoutes } = require('./platformRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -298,6 +299,8 @@ app.post(['/api/artists', '/artists'], async (req, res, next) => {
     next(error);
   }
 });
+
+registerPlatformRoutes(app, pool);
 
 app.use((error, req, res, next) => {
   console.error(error);
