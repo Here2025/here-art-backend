@@ -39,6 +39,37 @@ function isAllowedOrigin(origin) {
   }
 }
 
+function getDatabaseHost(url) {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname;
+  } catch (error) {
+    return null;
+  }
+}
+
+function getDatabaseSslConfig(url) {
+  const mode = (process.env.PGSSLMODE || '').toLowerCase();
+  if (mode === 'disable') return false;
+  if (mode === 'require') return { rejectUnauthorized: false };
+
+  const host = getDatabaseHost(url) || '';
+  const isRailwayInternal = host.includes('railway.internal') || host.includes('.internal');
+  const isLocal = host === 'localhost' || host === '127.0.0.1';
+
+  if (isRailwayInternal || isLocal) return false;
+  return { rejectUnauthorized: false };
+}
+
+function getSafeDatabaseError(error) {
+  if (!error) return null;
+  return {
+    name: error.name || 'Error',
+    code: error.code || null,
+    message: error.message || 'Database connection failed',
+  };
+}
+
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '4mb' }));
 app.use(express.urlencoded({ extended: true, limit: '4mb' }));
@@ -57,7 +88,7 @@ app.use(
 const pool = DATABASE_URL
   ? new Pool({
       connectionString: DATABASE_URL,
-      ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false },
+      ssl: getDatabaseSslConfig(DATABASE_URL),
     })
   : null;
 
@@ -157,6 +188,7 @@ app.get('/', (req, res) => {
 
 app.get('/healthz', async (req, res) => {
   let database = 'not_configured';
+  let databaseError = null;
 
   if (pool) {
     try {
@@ -164,6 +196,7 @@ app.get('/healthz', async (req, res) => {
       database = 'ok';
     } catch (error) {
       database = 'error';
+      databaseError = getSafeDatabaseError(error);
     }
   }
 
@@ -171,6 +204,13 @@ app.get('/healthz', async (req, res) => {
     status: 'ok',
     service: 'here-art-backend',
     database,
+    databaseError,
+    databaseRuntime: {
+      hasPool: Boolean(pool),
+      databaseUrlPresent: Boolean(DATABASE_URL),
+      databaseHostType: getDatabaseHost(DATABASE_URL)?.includes('railway.internal') ? 'railway_internal' : 'external_or_public',
+      sslMode: process.env.PGSSLMODE || 'auto',
+    },
     timestamp: new Date().toISOString(),
   });
 });
