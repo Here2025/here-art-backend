@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { Pool } = require('pg');
 const { registerPlatformRoutes } = require('./platformRoutes');
+const { registerDemoSeedRoutes } = require('./demoSeedRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -347,6 +348,7 @@ app.post(['/api/artists', '/artists'], async (req, res, next) => {
 });
 
 registerPlatformRoutes(app, pool);
+registerDemoSeedRoutes(app, pool);
 
 app.use((error, req, res, next) => {
   console.error(error);
