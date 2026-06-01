@@ -8,7 +8,11 @@ const { registerPlatformRoutes } = require('./platformRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_URL = process.env.DATABASE_URL
+  || process.env.POSTGRES_URL
+  || process.env.POSTGRES_DATABASE_URL
+  || process.env.POSTGRES_PRIVATE_URL
+  || process.env.POSTGRES_PUBLIC_URL;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://herefavoured.netlify.app';
 
 const allowedOrigins = [
