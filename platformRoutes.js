@@ -15,8 +15,33 @@ function cleanDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
+function getSafeRuntimeDiagnostics(pool) {
+  const databaseEnvKeys = [
+    'DATABASE_URL',
+    'POSTGRES_URL',
+    'POSTGRES_DATABASE_URL',
+    'POSTGRES_PRIVATE_URL',
+    'POSTGRES_PUBLIC_URL',
+    'PGDATABASE',
+    'PGHOST',
+    'PGPORT',
+    'PGUSER',
+  ];
+
+  return {
+    hasPool: Boolean(pool),
+    databaseUrlPresent: Boolean(process.env.DATABASE_URL),
+    presentDatabaseEnvKeys: databaseEnvKeys.filter((key) => Boolean(process.env[key])),
+    railwayEnvironment: process.env.RAILWAY_ENVIRONMENT_NAME || null,
+    railwayService: process.env.RAILWAY_SERVICE_NAME || null,
+    railwayProject: process.env.RAILWAY_PROJECT_NAME || null,
+  };
+}
+
 async function ensurePlatformSchema(pool) {
   if (!pool) return;
+
+  await pool.query('create extension if not exists pgcrypto;');
 
   await pool.query(`
     create table if not exists profiles (
@@ -168,14 +193,31 @@ function registerPlatformRoutes(app, pool) {
   app.get(['/api/platform/status', '/platform/status'], async (req, res, next) => {
     try {
       if (!pool) {
-        return res.json({ status: 'ok', database: 'not_configured', platform: 'planned' });
+        return res.json({
+          status: 'ok',
+          database: 'not_configured',
+          platform: 'planned',
+          diagnostics: getSafeRuntimeDiagnostics(pool),
+        });
       }
 
       await ensurePlatformSchema(pool);
-      res.json({ status: 'ok', database: 'ok', platform: 'enabled' });
+      res.json({
+        status: 'ok',
+        database: 'ok',
+        platform: 'enabled',
+        diagnostics: getSafeRuntimeDiagnostics(pool),
+      });
     } catch (error) {
       next(error);
     }
+  });
+
+  app.get(['/api/platform/diagnostics', '/platform/diagnostics'], (req, res) => {
+    res.json({
+      status: 'ok',
+      diagnostics: getSafeRuntimeDiagnostics(pool),
+    });
   });
 
   app.get(['/api/profiles', '/profiles'], async (req, res, next) => {
