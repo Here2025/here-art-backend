@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { Pool } = require('pg');
 const { registerPlatformRoutes } = require('./platformRoutes');
+const { registerAccountRoutes } = require('./accountRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,8 +72,8 @@ function getSafeDatabaseError(error) {
 }
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(express.json({ limit: '4mb' }));
-app.use(express.urlencoded({ extended: true, limit: '4mb' }));
+app.use(express.json({ limit: '8mb' }));
+app.use(express.urlencoded({ extended: true, limit: '8mb' }));
 app.use(
   cors({
     origin(origin, callback) {
@@ -346,6 +347,7 @@ app.post(['/api/artists', '/artists'], async (req, res, next) => {
   }
 });
 
+registerAccountRoutes(app, pool);
 registerPlatformRoutes(app, pool);
 
 app.use((error, req, res, next) => {
